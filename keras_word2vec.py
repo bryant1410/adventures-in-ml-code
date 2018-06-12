@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Input, Dense, Reshape, merge
+from keras.layers import Input, Dense, Reshape, dot
 from keras.layers.embeddings import Embedding
 from keras.preprocessing.sequence import skipgrams
 from keras.preprocessing import sequence
@@ -95,10 +95,10 @@ context = embedding(input_context)
 context = Reshape((vector_dim, 1))(context)
 
 # setup a cosine similarity operation which will be output in a secondary model
-similarity = merge([target, context], mode='cos', dot_axes=0)
+similarity = dot([target, context], axes=0, normalize=True)
 
 # now perform the dot product operation to get a similarity measure
-dot_product = merge([target, context], mode='dot', dot_axes=1)
+dot_product = dot([target, context], axes=1, normalize=False)
 dot_product = Reshape((1,))(dot_product)
 # add the sigmoid output layer
 output = Dense(1, activation='sigmoid')(dot_product)
