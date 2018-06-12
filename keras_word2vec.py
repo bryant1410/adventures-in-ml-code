@@ -68,6 +68,8 @@ vocab_size = 10000
 data, count, dictionary, reverse_dictionary = collect_data(vocabulary_size=vocab_size)
 print(data[:7])
 
+senses_count = 2  # Only works for 2.
+
 window_size = 3
 vector_dim = 300
 epochs = 200000
@@ -88,14 +90,14 @@ print(couples[:10], labels[:10])
 input_target = Input((1,))
 input_context = Input((1,))
 
-embedding = Embedding(vocab_size, vector_dim, input_length=1, name='embedding')
+embedding = Embedding(vocab_size, vector_dim * senses_count, input_length=1, name='embedding')
 target = embedding(input_target)
-target = Reshape((vector_dim, 1))(target)
+target = Reshape((vector_dim, senses_count))(target)
 context = embedding(input_context)
-context = Reshape((vector_dim, 1))(context)
+context = Reshape((vector_dim, senses_count))(context)
 
 # setup a cosine similarity operation which will be output in a secondary model
-similarity = dot([target, context], axes=0, normalize=True)
+similarity = dot([target[0], context[0]], axes=0, normalize=True)  ##########
 
 # now perform the dot product operation to get a similarity measure
 dot_product = dot([target, context], axes=1, normalize=False)
