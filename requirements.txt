@@ -1,2 +1,2 @@
 Keras==2.2.0
-tensorflow==1.8.0
+#tensorflow==1.8.0 # Maybe it's installed from other source
