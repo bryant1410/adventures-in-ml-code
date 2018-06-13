@@ -1,5 +1,5 @@
 from keras.models import Model
-from keras.layers import Input, Dense, Reshape, dot
+from keras.layers import Input, Dense, Reshape, dot, GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
 from keras.preprocessing.sequence import skipgrams
 from keras.preprocessing import sequence
@@ -68,7 +68,7 @@ vocab_size = 10000
 data, count, dictionary, reverse_dictionary = collect_data(vocabulary_size=vocab_size)
 print(data[:7])
 
-senses_count = 2  # Only works for 2.
+senses_count = 2
 
 window_size = 3
 vector_dim = 300
@@ -97,19 +97,20 @@ context = embedding(input_context)
 context = Reshape((vector_dim, senses_count))(context)
 
 # setup a cosine similarity operation which will be output in a secondary model
-similarity = dot([target[0], context[0]], axes=0, normalize=True)  ##########
+similarity = dot([target, context], axes=1, normalize=True)
 
 # now perform the dot product operation to get a similarity measure
 dot_product = dot([target, context], axes=1, normalize=False)
 dot_product = Reshape((1,))(dot_product)
+global_max_pooling = GlobalMaxPooling1D()(dot_product)
 # add the sigmoid output layer
-output = Dense(1, activation='sigmoid')(dot_product)
+output = Dense(1, activation='sigmoid')(global_max_pooling)
 # create the primary training model
-model = Model(input=[input_target, input_context], output=output)
+model = Model(inputs=[input_target, input_context], outputs=output)
 model.compile(loss='binary_crossentropy', optimizer='rmsprop')
 
 # create a secondary validation model to run our similarity checks during training
-validation_model = Model(input=[input_target, input_context], output=similarity)
+validation_model = Model(inputs=[input_target, input_context], outputs=similarity)
 
 
 class SimilarityCallback:
