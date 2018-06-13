@@ -98,19 +98,21 @@ context = Reshape((vector_dim, senses_count))(context)
 
 # setup a cosine similarity operation which will be output in a secondary model
 similarity = dot([target, context], axes=1, normalize=True)
+max_similarity = GlobalMaxPooling1D()(similarity)
 
 # now perform the dot product operation to get a similarity measure
 dot_product = dot([target, context], axes=1, normalize=False)
-dot_product = Reshape((1,))(dot_product)
-global_max_pooling = GlobalMaxPooling1D()(dot_product)
+
+max_dot_product = GlobalMaxPooling1D()(dot_product)
+max_dot_product = Reshape((1,))(max_dot_product)
 # add the sigmoid output layer
-output = Dense(1, activation='sigmoid')(global_max_pooling)
+output = Dense(1, activation='sigmoid')(max_dot_product)
 # create the primary training model
 model = Model(inputs=[input_target, input_context], outputs=output)
 model.compile(loss='binary_crossentropy', optimizer='rmsprop')
 
 # create a secondary validation model to run our similarity checks during training
-validation_model = Model(inputs=[input_target, input_context], outputs=similarity)
+validation_model = Model(inputs=[input_target, input_context], outputs=max_similarity)
 
 
 class SimilarityCallback:
